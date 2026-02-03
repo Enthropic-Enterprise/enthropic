@@ -2,7 +2,7 @@
 
 Enterprise-grade, high-performance trading platform built with microservices architecture featuring real-time market data processing, risk management, and strategy execution.
 
-## 🏗️ Architecture
+## Architecture
 
 The platform consists of 6 microservices:
 
@@ -21,7 +21,7 @@ The platform consists of 6 microservices:
 - Prometheus (Port 9090) - Metrics
 - Grafana (Port 3001) - Dashboards
 
-## 📦 Prerequisites
+## Prerequisites
 
 - Docker >= 24.0
 - Docker Compose >= 2.20
@@ -29,7 +29,7 @@ The platform consists of 6 microservices:
 - Rust >= 1.75
 - Python >= 3.11
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Setup Environment
 
