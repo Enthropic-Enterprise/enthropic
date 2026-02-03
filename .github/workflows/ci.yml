@@ -16,26 +16,29 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Create dummy .env for build
+      - name: Install dependencies (root)
+        run: npm ci
+
+      - name: Create dummy .env
         run: |
           cp .env.example .env
-          # Isi dummy (tidak masalah untuk build stage)
           echo "POSTGRES_PASSWORD=dummy" >> .env
           echo "REDIS_PASSWORD=dummy" >> .env
           echo "JWT_SECRET=dummy-jwt-secret-for-ci-only" >> .env
           echo "NATS_PASSWORD=dummy" >> .env
+          echo "GF_SECURITY_ADMIN_PASSWORD=dummy" >> .env
 
-      - name: Build all services
+      - name: Build all Docker images
         run: docker compose build --no-cache
 
-      - name: Trivy scan all images
+      - name: Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'enthropic-*'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
-          severity: 'Critical, High'
+          severity: 'CRITICAL,HIGH'
 
       - name: Login to GHCR
         if: github.ref == 'refs/heads/main'
@@ -45,6 +48,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push to GHCR
+      - name: Push images to GHCR
         if: github.ref == 'refs/heads/main'
         run: docker compose push
