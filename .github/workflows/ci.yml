@@ -32,17 +32,17 @@ jobs:
 
       - name: Trivy vulnerability scan (all images)
         run: |
-            echo "🔍 Scanning all built images with Trivy..."
-            for image in $(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E 'enthropic-|nginx'); do
-              echo "::group:: Scanning $image"
+            echo " Scanning all Docker images..."
+            for img in $(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E 'enthropic-|nginx'); do
+              echo "::group::Scanning $img"
               docker run --rm \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 -v $HOME/.cache/trivy:/root/.cache/trivy \
-                aquasec/trivy image \
+                aquasec/trivy:latest image \
                   --exit-code 1 \
                   --ignore-unfixed \
                   --severity CRITICAL,HIGH \
                   --format table \
-                  "$image"
+                  "$img"
               echo "::endgroup::"
             done
