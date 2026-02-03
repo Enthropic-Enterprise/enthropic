@@ -8,7 +8,6 @@
 # ENVIRONMENT & SECRETS (CRITICAL)
 # ==============================================================================
 .env
-.env.*
 !.env
 !.env.template
 *.env
