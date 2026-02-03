@@ -1,11 +1,10 @@
-
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 COPY apps/dashboard/package*.json ./apps/dashboard/
-RUN npm ci --omit=dev
+RUN npm ci
 COPY apps/dashboard ./apps/dashboard
-RUN npm run build --workspace=dashboard
+RUN cd apps/dashboard && npm run build
 
 FROM nginx:stable-alpine
 COPY --from=builder /app/apps/dashboard/dist /usr/share/nginx/html
