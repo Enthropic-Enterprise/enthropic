@@ -1,14 +1,8 @@
-# nats-gateway.Dockerfile
-# Multi-stage build for NestJS + WebSocket service (nats-gateway)
-# Optimized for monorepo with root package-lock.json
-
-# --------------------- Builder Stage ---------------------
-# nats-gateway.Dockerfile
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 COPY apps/nats-gateway/package*.json ./apps/nats-gateway/
-RUN npm ci --omit=dev
+RUN npm ci
 COPY apps/nats-gateway ./apps/nats-gateway
 RUN cd apps/nats-gateway && npm run build
 
