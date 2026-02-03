@@ -1,9 +1,9 @@
-# Enthropic Trading Platform – Docker Compose (100% Clean – Enterprise Ready)
 version: '3.9'
 
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: enthropic-postgres
     env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -11,22 +11,35 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES}
     ports: ["5432:5432"]
-    volumes: [postgres_data:/var/lib/postgresql/data, ./infra/db/init:/docker-entrypoint-initdb.d]
-    healthcheck: { test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"], interval: 10s, timeout: 5s, retries: 15,
-      start_period: 30s}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
     networks: [enthropic-network]
 
   redis:
     image: redis:7-alpine
+    container_name: enthropic-redis
     command: redis-server --requirepass ${REDIS_PASSWORD}
     env_file: .env
     ports: ["6379:6379"]
     volumes: [redis_data:/data]
-    healthcheck: { test: ["CMD", "redis-cli", "--raw", "incr", "ping"], interval: 10s, timeout: 3s, retries: 5 }
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks: [enthropic-network]
 
   nats:
     image: nats:2.10-alpine
+    container_name: enthropic-nats
     command: "--jetstream --store_dir=/data --max_payload=8MB --user ${NATS_USER} --pass ${NATS_PASSWORD}"
     env_file: .env
     ports: ["4222:4222", "8222:8222", "6222:6222"]
@@ -34,7 +47,10 @@ services:
     healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"], interval: 10s, timeout: 5s, retries: 5 }
     networks: [enthropic-network]
 
-  jaeger: { image: jaegertracing/all-in-one:1.51, ports: ["16686:16686", "4317:4317", "4318:4318"], networks: [enthropic-network] }
+  jaeger:
+    image: jaegertracing/all-in-one:1.51
+    ports: ["16686:16686", "4317:4317", "4318:4318"]
+    networks: [enthropic-network]
 
   prometheus:
     image: prom/prometheus:latest
@@ -62,19 +78,73 @@ services:
     build: { context: ., dockerfile: infra/docker/auth-service.Dockerfile }
     env_file: .env
     environment:
-      NODE_ENV: production
-      PORT: 3000
       DATABASE_URL: ${DATABASE_URL}/auth_db?schema=public
       JWT_SECRET: ${JWT_SECRET}
       REDIS_URL: ${REDIS_URL}
     ports: ["3002:3000"]
     depends_on: [postgres, redis]
-    healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"], interval: 30s, timeout: 10s, retries: 3 }
-    restart: unless-stopped
     networks: [enthropic-network]
 
-  # (execution-core, risk-service, strategy-service, nats-gateway, dashboard – pola sama seperti sebelumnya)
-  # Jika Anda ingin versi lengkap semua service, beri tahu saya, saya kirimkan full lagi.
+  execution-core:
+    build: { context: ., dockerfile: infra/docker/execution-core.Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}/trading_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    ports: ["9100:9100"]
+    depends_on: [postgres, redis, nats]
+    networks: [enthropic-network]
+
+  risk-service:
+    build: { context: ., dockerfile: infra/docker/risk-service.Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}/risk_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    ports: ["3003:3003"]
+    depends_on: [postgres, redis, nats]
+    networks: [enthropic-network]
+
+  strategy-service:
+    build: { context: ., dockerfile: infra/docker/strategy-service.Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}/trading_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    ports: ["8000:8000"]
+    depends_on: [postgres, redis, nats]
+    networks: [enthropic-network]
+
+  nats-gateway:
+    build: { context: ., dockerfile: infra/docker/nats-gateway.Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}/trading_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      MARKET_SIMULATOR_ENABLED: ${MARKET_SIMULATOR_ENABLED}
+      MARKET_SIMULATOR_SYMBOLS: ${MARKET_SIMULATOR_SYMBOLS}
+    ports: ["8080:8080", "8081:8081"]
+    depends_on: [postgres, redis, nats]
+    networks: [enthropic-network]
+
+  dashboard:
+    build: { context: ., dockerfile: infra/docker/dashboard.Dockerfile }
+    env_file: .env
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8081}
+      VITE_AUTH_SERVICE_URL: ${VITE_AUTH_SERVICE_URL:-http://localhost:3002}
+    ports: ["5173:80"]
+    depends_on: [auth-service, nats-gateway]
+    networks: [enthropic-network]
 
 networks:
   enthropic-network: { driver: bridge }
