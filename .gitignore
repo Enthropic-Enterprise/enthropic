@@ -1,0 +1,255 @@
+# ==============================================================================
+# ENTHROPIC TRADING PLATFORM - GITIGNORE
+# ==============================================================================
+# Comprehensive exclusion patterns for security, builds, and development
+# ==============================================================================
+
+# ==============================================================================
+# ENVIRONMENT & SECRETS (CRITICAL)
+# ==============================================================================
+.env
+.env.*
+!.env
+!.env.template
+*.env
+*.env.local
+.envrc
+*.local
+secrets/
+.secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials.json
+serviceaccount.json
+gcp-*.json
+aws-*.json
+*-credentials.json
+
+# ==============================================================================
+# NODE.JS
+# ==============================================================================
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.yarn/
+*.tgz
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ==============================================================================
+# PYTHON
+# ==============================================================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.env/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+develop-eggs/
+.installed.cfg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+nosetests.xml
+poetry.lock
+
+# ==============================================================================
+# RUST
+# ==============================================================================
+**/target/
+**/*.rs.bk
+Cargo.lock
+*.pdb
+*.rlib
+
+# ==============================================================================
+# BUILD OUTPUTS
+# ==============================================================================
+dist/
+build/
+out/
+output/
+*.tsbuildinfo
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.turbo/
+
+# ==============================================================================
+# TYPESCRIPT / JAVASCRIPT
+# ==============================================================================
+*.js.map
+*.d.ts.map
+tsconfig.tsbuildinfo
+
+# ==============================================================================
+# TESTING
+# ==============================================================================
+coverage/
+.nyc_output/
+test-results/
+test-report/
+playwright-report/
+test-results.xml
+junit.xml
+*.lcov
+
+# ==============================================================================
+# LOGS
+# ==============================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ==============================================================================
+# DATABASE
+# ==============================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+postgres_data/
+redis_data/
+nats_data/
+data/
+
+# ==============================================================================
+# MONITORING DATA
+# ==============================================================================
+prometheus_data/
+grafana_data/
+jaeger_data/
+*.trace
+
+# ==============================================================================
+# IDES & EDITORS
+# ==============================================================================
+.idea/
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.template
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.code-workspace
+
+# ==============================================================================
+# OPERATING SYSTEMS
+# ==============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==============================================================================
+# TEMPORARY FILES
+# ==============================================================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.old
+*.orig
+
+# ==============================================================================
+# DOCKER
+# ==============================================================================
+.docker/
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ==============================================================================
+# KUBERNETES
+# ==============================================================================
+*.kubeconfig
+kubeconfig
+.kube/
+
+# ==============================================================================
+# TERRAFORM / INFRASTRUCTURE
+# ==============================================================================
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+.terraformrc
+terraform.rc
+
+# ==============================================================================
+# MISCELLANEOUS
+# ==============================================================================
+*.pid
+*.seed
+*.pid.lock
+.cache
+.local
+.bash_history
+.zsh_history
+*.tgz
+*.gz
+*.zip
+*.tar
+*.rar
+*.7z
+.scannerwork/
+dump.rdb
+backups/*.sql
+!backups/.gitkeep

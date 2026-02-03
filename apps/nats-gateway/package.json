@@ -1,0 +1,33 @@
+{
+  "name": "@enthropic/nats-gateway",
+  "version": "1.0.0",
+  "description": "NATS Gateway for Enthropic Trading Platform",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node src/main.ts",
+    "start:complete": "ts-node src/main-complete.ts",
+    "start:simulator": "ts-node src/services/market-simulator.service.ts",
+    "start:processor": "ts-node src/services/order-processor.service.ts"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "pg": "^8.11.5",
+    "ioredis": "^5.4.1",
+    "jsonwebtoken": "^9.0.3",
+    "nats": "^2.29.3",
+    "uuid": "^9.0.1",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.11.9",
+    "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.2"
+  }
+}
