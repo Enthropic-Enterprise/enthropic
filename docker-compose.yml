@@ -1,9 +1,9 @@
-# Enthropic Trading Platform – Docker Compose (Production-Ready Secrets)
-# Semua rahasia diambil dari .env
-
+# Enthropic Trading Platform – Docker Compose
 version: '3.9'
 
 services:
+
+  # Infrastructure
   postgres:
     image: postgres:16-alpine
     container_name: enthropic-postgres
@@ -40,36 +40,127 @@ services:
     healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"], interval: 10s, timeout: 5s, retries: 5 }
     networks: [enthropic-network]
 
-  # Observability stack (tetap sama, hanya Grafana password dari .env)
+  # Observability
   jaeger: { image: jaegertracing/all-in-one:1.51, ports: ["16686:16686", "4317:4317", "4318:4318"], networks: [enthropic-network] }
-  prometheus: { image: prom/prometheus:latest, volumes: ["./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml", "prometheus_data:/prometheus"], ports: ["9090:9090"], networks: [enthropic-network] }
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes: ["./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml", prometheus_data:/prometheus]
+    ports: ["9090:9090"]
+    networks: [enthropic-network]
+
   grafana:
     image: grafana/grafana:latest
     env_file: .env
     environment:
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      GF_INSTALL_PLUGINS: grafana-clock-panel
     ports: ["3001:3000"]
-    volumes: ["./infra/grafana/provisioning:/etc/grafana/provisioning", "./infra/grafana/dashboards:/var/lib/grafana/dashboards", "grafana_data:/var/lib/grafana"]
+    volumes: ["./infra/grafana/provisioning:/etc/grafana/provisioning", "./infra/grafana/dashboards:/var/lib/grafana/dashboards", grafana_data:/var/lib/grafana]
     networks: [enthropic-network]
 
-  otel-collector: { image: otel/opentelemetry-collector-contrib:latest, volumes: ["./infra/monitoring/otel-collector.yml:/etc/otel-collector-config.yml"], ports: ["4315:4317", "4316:4318", "8888:8888", "8889:8889"], networks: [enthropic-network] }
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    volumes: ["./infra/monitoring/otel-collector.yml:/etc/otel-collector-config.yml"]
+    ports: ["4315:4317", "4316:4318", "8888:8888", "8889:8889"]
+    networks: [enthropic-network]
 
-  # Application services (semua pakai env_file + ${})
+  # Application Services
   auth-service:
     build: { context: ., dockerfile: infra/docker/auth-service.Dockerfile }
     env_file: .env
     environment:
+      NODE_ENV: production
+      PORT: 3000
       DATABASE_URL: ${DATABASE_URL}/auth_db?schema=public
       JWT_SECRET: ${JWT_SECRET}
       REDIS_URL: ${REDIS_URL}
-      # ... sisanya tetap sama
     ports: ["3002:3000"]
     depends_on: [postgres, redis]
+    healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"], interval: 30s, timeout: 10s, retries: 3 }
+    restart: unless-stopped
     networks: [enthropic-network]
 
-  # (Lakukan pola yang sama untuk execution-core, risk-service, strategy-service, nats-gateway, dashboard)
-  # Untuk singkat, saya hanya contohkan auth-service. Lakukan pola yang sama untuk service lain.
+  execution-core:
+    build: { context: ., dockerfile: infra/docker/execution-core.Dockerfile }
+    env_file: .env
+    environment:
+      RUST_LOG: info,execution_core=debug
+      DATABASE_URL: ${DATABASE_URL}/trading_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports: ["9100:9100"]
+    depends_on: [postgres, redis, nats]
+    healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:9100/health"], interval: 30s, timeout: 10s, retries: 3 }
+    restart: unless-stopped
+    networks: [enthropic-network]
+
+  risk-service:
+    build: { context: ., dockerfile: infra/docker/risk-service.Dockerfile }
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DATABASE_URL: ${DATABASE_URL}/risk_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports: ["3003:3003"]
+    depends_on: [postgres, redis, nats]
+    healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"], interval: 30s, timeout: 10s, retries: 3 }
+    restart: unless-stopped
+    networks: [enthropic-network]
+
+  strategy-service:
+    build: { context: ., dockerfile: infra/docker/strategy-service.Dockerfile }
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL}/trading_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports: ["8000:8000"]
+    depends_on: [postgres, redis, nats]
+    healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"], interval: 30s, timeout: 10s, retries: 3 }
+    restart: unless-stopped
+    networks: [enthropic-network]
+
+  nats-gateway:
+    build: { context: ., dockerfile: infra/docker/nats-gateway.Dockerfile }
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      WS_PORT: 8081
+      DATABASE_URL: ${DATABASE_URL}/trading_db?schema=public
+      REDIS_URL: ${REDIS_URL}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      MARKET_SIMULATOR_ENABLED: ${MARKET_SIMULATOR_ENABLED}
+      MARKET_SIMULATOR_SYMBOLS: ${MARKET_SIMULATOR_SYMBOLS}
+    ports: ["8080:8080", "8081:8081"]
+    depends_on: [postgres, redis, nats]
+    healthcheck: { test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"], interval: 30s, timeout: 10s, retries: 3 }
+    restart: unless-stopped
+    networks: [enthropic-network]
+
+  dashboard:
+    build: { context: ., dockerfile: infra/docker/dashboard.Dockerfile }
+    env_file: .env
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8081}
+      VITE_AUTH_SERVICE_URL: ${VITE_AUTH_SERVICE_URL:-http://localhost:3002}
+    ports: ["5173:80"]
+    depends_on: [auth-service, nats-gateway]
+    restart: unless-stopped
+    networks: [enthropic-network]
 
 networks:
   enthropic-network: { driver: bridge }
