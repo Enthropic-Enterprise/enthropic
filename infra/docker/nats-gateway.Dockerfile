@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 COPY apps/nats-gateway/package*.json ./apps/nats-gateway/
@@ -6,7 +6,7 @@ RUN npm ci
 COPY apps/nats-gateway ./apps/nats-gateway
 RUN cd apps/nats-gateway && npm run build
 
-FROM node:18-alpine
+FROM node:20-alpine
 RUN apk add --no-cache dumb-init
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
