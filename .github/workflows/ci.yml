@@ -30,11 +30,17 @@ jobs:
       - name: Build all services
         run: docker compose build --no-cache
 
-      - name: Trivy scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'enthropic-*'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+      - name: Trivy vulnerability scan (all built images)
+        run: |
+          echo "Scanning all images built by docker compose..."
+          docker images --format "{{.Repository}}:{{.Tag}}" \
+            | grep -E 'enthropic-|nginx' \
+            | while read -r image; do
+                echo "::group::Scanning $image"
+                trivy image \
+                  --exit-code 1 \
+                  --ignore-unfixed \
+                  --severity CRITICAL,HIGH \
+                  "$image"
+                echo "::endgroup::"
+              done
