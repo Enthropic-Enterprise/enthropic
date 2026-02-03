@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  ci:
+  build-and-scan:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,10 +31,17 @@ jobs:
         run: docker compose build --no-cache
 
       - name: Trivy Scan All Images
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'enthropic-*'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+        run: |
+          echo "Scanning all enthropic images..."
+          for img in $(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E '^enthropic-'); do
+            echo "→ Scanning $img"
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v $HOME/.cache/trivy:/root/.cache/trivy \
+              aquasec/trivy:latest image \
+                --exit-code 1 \
+                --ignore-unfixed \
+                --severity CRITICAL,HIGH \
+                --format table \
+                "$img"
+          done
