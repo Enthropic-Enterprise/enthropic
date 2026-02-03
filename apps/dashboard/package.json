@@ -9,14 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@nestjs/cli": "11.0.16",
-    "@nestjs/config": "^4.0.2",
     "axios": "^1.13.4",
     "eslint": "9.39.2",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-router-dom": "^6.21.1",
-    "recharts": "^2.10.3",
+    "recharts": "^2.15.4",
     "zustand": "^4.5.7"
   },
   "devDependencies": {
