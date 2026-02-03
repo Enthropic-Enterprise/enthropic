@@ -44,4 +44,4 @@ jobs:
                 --severity CRITICAL,HIGH \
                 --format table \
                 "$img"
-          done
+          done# CI Pipeline - triggered on Tue Feb  3 21:56:14 SEAST 2026
