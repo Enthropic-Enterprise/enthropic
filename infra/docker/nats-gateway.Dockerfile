@@ -1,56 +1,48 @@
-# =========================
-# deps stage
-# =========================
-FROM node:20-alpine AS deps
+# nats-gateway.Dockerfile
+# Multi-stage build for NestJS + WebSocket service (nats-gateway)
+# Optimized for monorepo with root package-lock.json
+
+# --------------------- Builder Stage ---------------------
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy workspace-level config (YANG MEMANG ADA)
-COPY package.json ./
-COPY nx.json tsconfig.base.json ./
+# 1. Copy root lockfile & package.json
+COPY package*.json ./
 
-# Copy app-level package.json (WAJIB ADA)
-COPY apps/nats-gateway/package.json ./apps/nats-gateway/package.json
+# 2. Copy only this service's package.json
+COPY apps/nats-gateway/package*.json ./apps/nats-gateway/
 
-# Install dependencies (tanpa lockfile = VALID)
-RUN npm install
+# 3. Install ALL dependencies using root lockfile
+RUN npm ci --omit=dev
 
-# =========================
-# builder stage
-# =========================
-FROM node:20-alpine AS builder
+# 4. Copy source code of this service
+COPY apps/nats-gateway ./apps/nats-gateway
 
-WORKDIR /app
+# 5. Build the NestJS service
+RUN npm run build --workspace=nats-gateway
 
-# Copy node_modules dari deps
-COPY --from=deps /app/node_modules ./node_modules
+# --------------------- Production Stage ---------------------
+FROM node:18-alpine
 
-# Copy full workspace source
-COPY . .
-
-# Build nats-gateway via Nx
-RUN npx nx build nats-gateway
-
-# =========================
-# production stage
-# =========================
-FROM node:20-alpine AS production
-
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-# Install minimal runtime deps
+# Add dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
 
-# Copy built output
-COPY --from=builder /app/dist/apps/nats-gateway ./dist
+WORKDIR /app
 
-# Copy app package.json (untuk metadata)
-COPY apps/nats-gateway/package.json ./package.json
+# Copy node_modules from builder
+COPY --from=builder /app/node_modules ./node_modules
 
-# Expose port
-EXPOSE 3002
+# Copy built dist folder
+COPY --from=builder /app/apps/nats-gateway/dist ./apps/nats-gateway/dist
 
-# Run
-CMD ["dumb-init", "node", "dist/main.js"]
+# Copy package.json
+COPY --from=builder /app/apps/nats-gateway/package.json ./apps/nats-gateway/
+
+# Run as non-root user
+USER node
+
+EXPOSE 8080 8081
+
+# Use dumb-init + production start script
+CMD ["dumb-init", "node", "apps/nats-gateway/dist/main"]

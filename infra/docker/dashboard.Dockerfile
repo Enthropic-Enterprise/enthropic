@@ -1,25 +1,33 @@
-# Stage 1: build frontend
-FROM node:20-alpine AS build
+# dashboard.Dockerfile
+# Production build for Vite + React frontend (dashboard)
+# Uses nginx to serve static files (best practice for frontend)
+
+# --------------------- Builder Stage ---------------------
+FROM node:18-alpine AS builder
+
 WORKDIR /app
 
-# Copy only dashboard package files (avoid requiring root package-lock)
-COPY apps/dashboard/package*.json ./
+# 1. Copy root lockfile & package.json (monorepo requirement)
+COPY package*.json ./
 
-# Install dependencies (safe: if package-lock exists, npm will use it)
-RUN npm install --omit=dev
+# 2. Copy dashboard package.json
+COPY apps/dashboard/package*.json ./apps/dashboard/
 
-# Copy dashboard source and build
-COPY apps/dashboard ./
-# If your frontend build script differs, update `npm run build`
-RUN npm run build --if-present
+# 3. Install dependencies
+RUN npm ci --omit=dev
 
-# Stage 2: serve with nginx
-FROM nginx:alpine
-# Remove default content
-RUN rm -rf /usr/share/nginx/html/*
+# 4. Copy dashboard source code
+COPY apps/dashboard ./apps/dashboard
 
-# Copy built static files (assumes build output -> /app/dist)
-COPY --from=build /app/dist /usr/share/nginx/html
+# 5. Build Vite app (outputs to dist folder)
+RUN npm run build --workspace=dashboard
+
+# --------------------- Production Stage ---------------------
+FROM nginx:stable-alpine
+
+# Copy built static files from builder stage
+COPY --from=builder /app/apps/dashboard/dist /usr/share/nginx/html
 
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
