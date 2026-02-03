@@ -30,17 +30,19 @@ jobs:
       - name: Build all services
         run: docker compose build --no-cache
 
-      - name: Trivy vulnerability scan (all built images)
+      - name: Trivy vulnerability scan (all images)
         run: |
-          echo "Scanning all images built by docker compose..."
-          docker images --format "{{.Repository}}:{{.Tag}}" \
-            | grep -E 'enthropic-|nginx' \
-            | while read -r image; do
-                echo "::group::Scanning $image"
-                trivy image \
+            echo "🔍 Scanning all built images with Trivy..."
+            for image in $(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E 'enthropic-|nginx'); do
+              echo "::group:: Scanning $image"
+              docker run --rm \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v $HOME/.cache/trivy:/root/.cache/trivy \
+                aquasec/trivy image \
                   --exit-code 1 \
                   --ignore-unfixed \
                   --severity CRITICAL,HIGH \
+                  --format table \
                   "$image"
-                echo "::endgroup::"
-              done
+              echo "::endgroup::"
+            done
