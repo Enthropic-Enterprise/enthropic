@@ -2,17 +2,56 @@
   "name": "enthropic",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*",
+    "libs/shared/*"
+  ],
   "scripts": {
     "dev": "concurrently \"npm run dev:auth\" \"npm run dev:risk\" \"npm run dev:nats-gateway\" \"npm run dev:dashboard\"",
     "build": "npm run build:auth && npm run build:risk && npm run build:nats-gateway && npm run build:dashboard",
+    "test": "npm run test:auth && npm run test:risk && npm run test:execution && npm run test:strategy",
+    "test:auth": "cd apps/auth-service && npm test",
+    "test:risk": "cd apps/risk-service && npm test",
+    "test:execution": "cd apps/execution-core && cargo test",
+    "test:strategy": "cd apps/strategy-service && poetry run pytest",
+    "lint:all": "npm run lint:auth && npm run lint:risk && npm run lint:nats-gateway",
+    "lint:auth": "cd apps/auth-service && npm run lint",
+    "lint:risk": "cd apps/risk-service && npm run lint",
+    "lint:nats-gateway": "cd apps/nats-gateway && npm run lint",
+    "lint:execution": "cd apps/execution-core && cargo clippy -- -D warnings",
+    "format:all": "npm run format:ts && npm run format:rust && npm run format:python",
     "docker:build": "docker compose build",
-    "docker:up": "docker compose up -d"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "prisma:generate": "npm run prisma:generate:auth && npm run prisma:generate:risk",
+    "prisma:generate:auth": "cd apps/auth-service && npx prisma generate",
+    "prisma:generate:risk": "cd apps/risk-service && npx prisma generate",
+    "prisma:migrate": "npm run prisma:migrate:auth && npm run prisma:migrate:risk",
+    "prisma:migrate:auth": "cd apps/auth-service && npx prisma migrate deploy",
+    "prisma:migrate:risk": "cd apps/risk-service && npx prisma migrate deploy",
+    "proto:generate": "bash tools/scripts/generate-protos.sh",
+    "setup:dev": "bash tools/scripts/setup-dev.sh",
+    "health:check": "curl http://localhost:3002/health && curl http://localhost:9100/health && curl http://localhost:3003/health && curl http://localhost:8000/health"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.39.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=18"
-  }
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Enthropic-Enterprise/enthropic"
+  },
+  "author": "Enthropic Team",
+  "license": "PROPRIETARY"
 }
