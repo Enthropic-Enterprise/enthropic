@@ -41,7 +41,6 @@ pnpm-debug.log*
 .npm/
 .yarn/
 *.tgz
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
