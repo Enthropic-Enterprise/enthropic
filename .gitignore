@@ -252,3 +252,4 @@ terraform.rc
 dump.rdb
 backups/*.sql
 !backups/.gitkeep
+windows-amd64/
