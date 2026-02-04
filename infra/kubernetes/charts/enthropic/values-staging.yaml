@@ -1,0 +1,25 @@
+replicaCount: 2
+environment: staging
+
+image:
+  repository: ghcr.io/enthropic-enterprise
+  tag: "latest"
+  pullPolicy: Always
+
+externalSecret:
+  enabled: true
+  secretStore: vault-backend
+  refreshInterval: 1h
+
+resources:
+  requests:
+    cpu: 300m
+    memory: 768Mi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
