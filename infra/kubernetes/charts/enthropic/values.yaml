@@ -1,162 +1,66 @@
-# Global configuration
-global:
-  environment: production
-  imageRegistry: ""
-  imagePullSecrets: []
+# ==================== Global Settings ====================
+replicaCount: 2
+environment: development
 
-# Execution Core
-executionCore:
-  replicaCount: 2
-  image:
-    repository: enthropic/execution-core
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 2000m
-      memory: 2Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 10
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
-  env:
-    RUST_LOG: "info,execution_core=debug"
+image:
+  repository: ghcr.io/enthropic-enterprise
+  tag: "latest"
+  pullPolicy: Always
 
-# Risk Service
-riskService:
-  replicaCount: 2
-  image:
-    repository: enthropic/risk-service
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      cpu: 250m
-      memory: 256Mi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 5
-    targetCPUUtilizationPercentage: 70
-  service:
-    port: 3001
-
-# Strategy Service
-strategyService:
-  replicaCount: 2
-  image:
-    repository: enthropic/strategy-service
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      cpu: 250m
-      memory: 256Mi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 5
-
-# NATS Gateway
-natsGateway:
-  replicaCount: 2
-  image:
-    repository: enthropic/nats-gateway
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      cpu: 250m
-      memory: 256Mi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
-  autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 8
-  service:
-    type: LoadBalancer
-    port: 3002
-
-# Dashboard
-dashboard:
-  replicaCount: 2
-  image:
-    repository: enthropic/dashboard
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-  service:
-    type: LoadBalancer
-    port: 80
-  ingress:
-    enabled: true
-    className: nginx
-    hosts:
-      - host: trading.enthropic.io
-        paths:
-          - path: /
-            pathType: Prefix
-
-# PostgreSQL (using external or managed)
-postgresql:
-  enabled: false  # Use managed PostgreSQL in production
-  external:
-    host: ""
-    port: 5432
-    database: enthropic
-    existingSecret: enthropic-db-credentials
-
-# Redis
-redis:
-  enabled: false  # Use managed Redis in production
-  external:
-    host: ""
-    port: 6379
-    existingSecret: enthropic-redis-credentials
-
-# NATS
-nats:
+# External Secrets
+externalSecret:
   enabled: true
-  cluster:
-    enabled: true
-    replicas: 3
-  jetstream:
-    enabled: true
-    memoryStore:
-      maxSize: 1Gi
-    fileStore:
-      size: 10Gi
+  secretStore: vault-backend
+  refreshInterval: 1h
 
-# Monitoring
-monitoring:
-  prometheus:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-  grafana:
-    enabled: false  # Use managed Grafana
+# ==================== Service Configuration ====================
 
-# Secrets
-secrets:
-  jwtSecret:
-    existingSecret: enthropic-jwt-secret
-    key: jwt-secret
+auth-service:
+  name: auth-service
+  port: 3000
+  replicaCount: 2
+
+risk-service:
+  name: risk-service
+  port: 3003
+  replicaCount: 2
+
+execution-core:
+  name: execution-core
+  port: 9100
+  replicaCount: 3
+
+nats-gateway:
+  name: nats-gateway
+  port: 8080
+  replicaCount: 2
+
+dashboard:
+  name: dashboard
+  port: 80
+  replicaCount: 2
+
+# ==================== Resources (Default) ====================
+resources:
+  requests:
+    cpu: 300m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1.5Gi
+
+# ==================== HPA ====================
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 70
+
+# ==================== Probes ====================
+livenessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 15
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
