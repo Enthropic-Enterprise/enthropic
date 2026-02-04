@@ -1,4 +1,4 @@
-# ==================== Global Settings ====================
+# Global
 replicaCount: 2
 environment: development
 
@@ -7,14 +7,12 @@ image:
   tag: "latest"
   pullPolicy: Always
 
-# External Secrets
 externalSecret:
   enabled: true
   secretStore: vault-backend
   refreshInterval: 1h
 
-# ==================== Service Configuration ====================
-
+# Per Service Config
 auth-service:
   name: auth-service
   port: 3000
@@ -40,7 +38,7 @@ dashboard:
   port: 80
   replicaCount: 2
 
-# ==================== Resources (Default) ====================
+# Default Resources
 resources:
   requests:
     cpu: 300m
@@ -49,14 +47,14 @@ resources:
     cpu: 1000m
     memory: 1.5Gi
 
-# ==================== HPA ====================
+# HPA
 hpa:
   enabled: true
   minReplicas: 2
   maxReplicas: 15
   targetCPUUtilizationPercentage: 70
 
-# ==================== Probes ====================
+# Probes
 livenessProbe:
   initialDelaySeconds: 30
   periodSeconds: 15
