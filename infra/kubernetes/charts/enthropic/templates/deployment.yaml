@@ -21,11 +21,14 @@ spec:
         - name: {{ .Values.service.name }}
           image: "{{ .Values.image.repository }}/{{ .Values.service.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+
           ports:
             - containerPort: {{ .Values.service.port }}
+
           envFrom:
             - secretRef:
                 name: {{ include "enthropic.fullname" . }}-secrets
+
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu }}
@@ -33,15 +36,21 @@ spec:
             limits:
               cpu: {{ .Values.resources.limits.cpu }}
               memory: {{ .Values.resources.limits.memory }}
+
           livenessProbe:
             httpGet:
               path: /health
               port: {{ .Values.service.port }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: 5
+            failureThreshold: 6
+
           readinessProbe:
             httpGet:
               path: /health
               port: {{ .Values.service.port }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: 3
+            failureThreshold: 3
