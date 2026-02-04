@@ -11,6 +11,31 @@ externalSecret:
   secretStore: vault-backend
   refreshInterval: 1h
 
+auth-service:
+  name: auth-service
+  port: 3000
+  replicaCount: 2
+
+risk-service:
+  name: risk-service
+  port: 3003
+  replicaCount: 2
+
+execution-core:
+  name: execution-core
+  port: 9100
+  replicaCount: 3
+
+nats-gateway:
+  name: nats-gateway
+  port: 8080
+  replicaCount: 2
+
+dashboard:
+  name: dashboard
+  port: 80
+  replicaCount: 2
+
 resources:
   requests:
     cpu: 300m
@@ -23,3 +48,4 @@ hpa:
   enabled: true
   minReplicas: 2
   maxReplicas: 10
+  targetCPUUtilizationPercentage: 70

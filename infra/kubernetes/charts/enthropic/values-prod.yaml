@@ -1,4 +1,3 @@
-# Production Values - Enthropic Trading Platform
 replicaCount: 3
 environment: production
 
@@ -11,6 +10,32 @@ externalSecret:
   enabled: true
   secretStore: vault-backend
   refreshInterval: 1h
+
+# Per Service Configuration
+auth-service:
+  name: auth-service
+  port: 3000
+  replicaCount: 3
+
+risk-service:
+  name: risk-service
+  port: 3003
+  replicaCount: 3
+
+execution-core:
+  name: execution-core
+  port: 9100
+  replicaCount: 4
+
+nats-gateway:
+  name: nats-gateway
+  port: 8080
+  replicaCount: 3
+
+dashboard:
+  name: dashboard
+  port: 80
+  replicaCount: 3
 
 resources:
   requests:
