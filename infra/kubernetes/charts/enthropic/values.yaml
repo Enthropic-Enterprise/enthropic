@@ -7,12 +7,18 @@ image:
   tag: "latest"
   pullPolicy: Always
 
+# External Secrets
 externalSecret:
   enabled: true
   secretStore: vault-backend
   refreshInterval: 1h
 
-# Per Service Configuration
+# Service Config
+service:
+  name: auth-service
+  port: 3000
+
+# Per Service Overrides
 auth-service:
   name: auth-service
   port: 3000
@@ -38,7 +44,7 @@ dashboard:
   port: 80
   replicaCount: 2
 
-# Default Resources
+# Resources
 resources:
   requests:
     cpu: 300m
@@ -53,6 +59,12 @@ hpa:
   minReplicas: 2
   maxReplicas: 15
   targetCPUUtilizationPercentage: 70
+
+# Monitoring
+monitoring:
+  prometheus:
+    serviceMonitor:
+      enabled: false
 
 # Probes
 livenessProbe:
